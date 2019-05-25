@@ -104,9 +104,16 @@
           hobbies: this.hobbyInputs.map(hobby => hobby.value),
           terms: this.terms
         };
-        axios.post('/user-admin.json', formData)
+        console.log("Email is "+formData.email)
+        console.log("Email is "+formData.password)
+
+        axios.post('/signupNewUser?key=AIzaSyAtwQ-RL7GKu0T1h4kOy32JRXmbmQPqiHM', {
+          email: formData.email,
+          password: formData.password,
+          returnSecureToken: true
+        })
                 .then(response => {
-                  this.$router.push("/dashboard");
+                  console.log(response);
                 })
                 .catch(error=> {
                   console.log(error);
