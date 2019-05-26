@@ -12,5 +12,9 @@ new Vue({
   el: '#app',
   router,
   store,
-  render: h => h(App)
-})
+  render: h => h(App),
+  created: function () {
+    store.dispatch("tryAutoLogin").then(() => console.log("成功装载信息"));
+  }
+
+});

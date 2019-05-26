@@ -43,16 +43,20 @@ export default new Vuex.Store({
                 returnSecureToken: true
             })
                 .then(res => {
-                console.log(res);
-                commit('authUser', {
-                    token: res.data.idToken,
-                    userId: res.data.localId
+                    console.log(res);
+                    commit('authUser', {
+                        token: res.data.idToken,
+                        userId: res.data.localId
+                    });
+                    const now = (new Date()).getTime();
+                    const expirationDate = now + res.data.expiresIn * 1000;
+                    localStorage.setItem('token', res.data.idToken);
+                    localStorage.setItem('expiresDate', expirationDate);
                 })
-            })
                 .catch(err => console.log(err));
         },
         fetchUser(context) {
-            if (context.state.idToken && context.state.userId) {
+            if (context.state.idToken) {
                 axios.get('https://myaxios-66666.firebaseio.com/user-admin.json' + '?auth=' + context.state.idToken)
                     .then(res => {
                         console.log("fetchUser执行了");
@@ -62,7 +66,21 @@ export default new Vuex.Store({
                     })
                     .catch(err => console.log(err));
             }
+        },
+
+        tryAutoLogin(context) {
+            const token = localStorage.getItem('token');
+            const expireDate = localStorage.getItem('expiresDate');
+            const now = (new Date()).getTime();
+            if ((now <= expireDate) && token) {
+                context.commit("authUser", {
+                    token: token,
+                    userId: null
+                });
+            }
         }
+
+
     },
     getters: {}
 })
