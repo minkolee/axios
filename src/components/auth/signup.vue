@@ -2,12 +2,15 @@
     <div id="signup">
         <div class="signup-form">
             <form @submit.prevent="onSubmit">
-                <div class="input">
-                    <label for="email">Mail</label>
+                <div class="input" :class="{invalid: $v.email.$error}">
+                    <label for="email" :style="{color: $v.email.$error? 'red':''}">Mail</label>
                     <input
                             type="email"
                             id="email"
+                            @blur="$v.email.$touch()"
                             v-model="email">
+                    <p v-if="!$v.email.email">请输入正确的Email地址。</p>
+                    <p v-if="!$v.email.required && $v.email.$dirty">Email地址不能为空。</p>
                 </div>
                 <div class="input">
                     <label for="age">Your Age</label>
@@ -69,7 +72,7 @@
 </template>
 
 <script>
-    import axios from 'axios';
+    import {required, email} from 'vuelidate/lib/validators';
 
     export default {
         data() {
@@ -83,6 +86,15 @@
                 terms: false
             }
         },
+
+        validations :{
+            email:{
+                required,
+                email
+            }
+        },
+
+
         methods: {
             onAddHobby() {
                 const newHobby = {
@@ -139,6 +151,11 @@
 
     .input {
         margin: 10px auto;
+    }
+
+    .input.invalid input {
+        border: 1px solid red;
+        background-color: #ffc9a9;
     }
 
     .input label {

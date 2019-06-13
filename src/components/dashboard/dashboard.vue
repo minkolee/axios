@@ -1,8 +1,8 @@
 <template>
   <div id="dashboard">
     <h1>That's the dashboard!</h1>
-    <p v-if="!userdata">You should only get here if you're authenticated!</p>
-    <p v-if="userdata" v-for="user in userdata">{{user}}</p>
+    <p v-cloak v-if="!userdata">You should only get here if you're authenticated!</p>
+    <p v-cloak v-if="userdata" v-for="user in userdata">{{user}}</p>
   </div>
 </template>
 
