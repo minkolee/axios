@@ -3,7 +3,7 @@
         <div class="signup-form">
             <form @submit.prevent="onSubmit">
                 <div class="input" :class="{invalid: $v.email.$error}">
-                    <label for="email" :style="{color: $v.email.$error? 'red':''}">Mail</label>
+                    <label for="email">Mail</label>
                     <input
                             type="email"
                             id="email"
@@ -12,25 +12,31 @@
                     <p v-if="!$v.email.email">请输入正确的Email地址。</p>
                     <p v-if="!$v.email.required && $v.email.$dirty">Email地址不能为空。</p>
                 </div>
-                <div class="input">
+                <div class="input" :class="{invalid: $v.age.$error}">
                     <label for="age">Your Age</label>
                     <input
-                            type="number"
                             id="age"
-                            v-model.number="age">
+                            @blur="$v.age.$touch()"
+                            v-model="age">
+                    <p v-if="!$v.age.required && $v.age.$dirty">年龄不能为空。</p>
+                    <p v-if="!$v.age.numeric && $v.age.$dirty">必须输入数字。</p>
+                    <p v-if="!$v.age.minValue && $v.age.$dirty &&$v.age.numeric">年龄必须大于{{ $v.age.$params.minValue.min
+                        }}岁。</p>
                 </div>
-                <div class="input">
+                <div class="input" :class="{invalid: $v.password.$error}">
                     <label for="password">Password</label>
                     <input
                             type="password"
                             id="password"
+                            @blur="$v.password.$touch()"
                             v-model="password">
                 </div>
-                <div class="input">
+                <div class="input" :class="{invalid: $v.confirmPassword.$error}">
                     <label for="confirm-password">Confirm Password</label>
                     <input
                             type="password"
                             id="confirm-password"
+                            @blur="$v.confirmPassword.$touch()"
                             v-model="confirmPassword">
                 </div>
                 <div class="input">
@@ -47,6 +53,7 @@
                     <button @click="onAddHobby" type="button">Add Hobby</button>
                     <div class="hobby-list">
                         <div
+                                :class="{invalid: $v.hobbyInputs.$each[index].$error}"
                                 class="input"
                                 v-for="(hobbyInput, index) in hobbyInputs"
                                 :key="hobbyInput.id">
@@ -54,17 +61,24 @@
                             <input
                                     type="text"
                                     :id="hobbyInput.id"
+                                    @input="$v.hobbyInputs.$each[index].value.$touch()"
                                     v-model="hobbyInput.value">
                             <button @click="onDeleteHobby(hobbyInput.id)" type="button">X</button>
                         </div>
+                        <p v-if="!$v.hobbyInputs.minLength || !$v.hobbyInputs.required">You have to select at least {{
+                            $v.hobbyInputs.$params.minLength.min }} hobby(s).</p>
                     </div>
                 </div>
-                <div class="input inline">
-                    <input type="checkbox" id="terms" v-model="terms">
+                <div class="input inline" :class="{invalid: $v.terms.$invalid}">
+                    <input
+                            type="checkbox"
+                            id="terms"
+                            @change="$v.terms.$touch()"
+                            v-model="terms">
                     <label for="terms">Accept Terms of Use</label>
                 </div>
                 <div class="submit">
-                    <button type="submit">Submit</button>
+                    <button :disabled="$v.$invalid" type="submit">Submit</button>
                 </div>
             </form>
         </div>
@@ -72,7 +86,7 @@
 </template>
 
 <script>
-    import {required, email} from 'vuelidate/lib/validators';
+    import {required, email, numeric, minValue, minLength, sameAs, requiredUnless} from 'vuelidate/lib/validators';
 
     export default {
         data() {
@@ -87,13 +101,70 @@
             }
         },
 
-        validations :{
-            email:{
+        validations: {
+            email: {
                 required,
-                email
+                email,
+                myVal: val => {
+                    if (val === '') return true
+                    return new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            resolve(val === 'test@test.com')
+                        }, 2000)
+                    })
+                }
+            },
+            age: {
+                required,
+                numeric,
+                minValue: minValue(18)
+            },
+            password: {
+                required,
+                minLength: minLength(4)
+            },
+            confirmPassword: {
+                //直接传入字符串
+                // sameAs: sameAs("saner")
+
+                //传入当前实例的属性值
+                sameAs: sameAs(v => v.password)
+            },
+            terms: {
+                required: requiredUnless(v => {
+                    return v.country === 'germany'
+                })
+            },
+            hobbyInputs: {
+                required,
+                minLength: minLength(2),
+                //$each表示当前array中的每一个元素
+                //所以其中要对这个元素的属性进行验证
+                //$each代表的是hobbyInput对象，要验证其value，验证器中的属性就是value
+                $each: {
+                    value: {
+                        required,
+                        minLength: minLength(5)
+                    }
+                }
             }
         },
 
+        computed: {
+            errorStyle: function () {
+                if (!this.$v.email.$dirty) {
+                    console.log(this.$v.email.$dirty)
+                    return false;
+                } else {
+                    console.log(this.$v.email.$error)
+                    if (this.$v.email.$error) {
+                        return true
+                    } else {
+                    }
+                    return false;
+                }
+            }
+        },
 
         methods: {
             onAddHobby() {
@@ -153,9 +224,13 @@
         margin: 10px auto;
     }
 
+    .input.invalid label {
+        color: red;
+    }
+
     .input.invalid input {
         border: 1px solid red;
-        background-color: #ffc9a9;
+        background-color: #ffc9aa;
     }
 
     .input label {
